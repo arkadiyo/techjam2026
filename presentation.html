@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenClaw — AI-наставник | ТехВилл</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --purple: #7B2FBE;
+  --purple-dark: #4A1A73;
+  --purple-light: #A855F7;
+  --green: #00C853;
+  --green-light: #4ADE80;
+  --green-dark: #166534;
+  --black: #09090b;
+  --black-card: #0d0d12;
+  --white: #f4f4f5;
+  --gray: #a1a1aa;
+  --glass-bg: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.08);
+  --glass-highlight: rgba(255,255,255,0.12);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width:100%; height:100%;
+  overflow:hidden;
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  background:var(--black);
+  color:var(--white);
+  -webkit-font-smoothing:antialiased;
+}
+
+.bg-layer {
+  position:fixed; inset:0; z-index:0; overflow:hidden;
+}
+
+.blob {
+  position:absolute;
+  border-radius:50%;
+  filter:blur(120px);
+  opacity:0.35;
+  will-change:transform;
+}
+
+.blob-1 {
+  width:600px; height:600px;
+  background:radial-gradient(circle, var(--purple) 0%, transparent 70%);
+  top:-10%; left:-10%;
+  animation:blobMove1 20s ease-in-out infinite;
+}
+.blob-2 {
+  width:500px; height:500px;
+  background:radial-gradient(circle, var(--green) 0%, transparent 70%);
+  bottom:-10%; right:-10%;
+  animation:blobMove2 25s ease-in-out infinite;
+}
+.blob-3 {
+  width:400px; height:400px;
+  background:radial-gradient(circle, var(--purple-light) 0%, transparent 70%);
+  top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  animation:blobMove3 18s ease-in-out infinite;
+}
+.blob-4 {
+  width:300px; height:300px;
+  background:radial-gradient(circle, var(--green-light) 0%, transparent 70%);
+  top:20%; right:20%;
+  animation:blobMove4 22s ease-in-out infinite;
+  opacity:0.2;
+}
+
+@keyframes blobMove1 {
+  0%,100%{transform:translate(0,0) scale(1);}
+  33%{transform:translate(15vw,10vh) scale(1.15);}
+  66%{transform:translate(5vw,20vh) scale(0.9);}
+}
+@keyframes blobMove2 {
+  0%,100%{transform:translate(0,0) scale(1);}
+  33%{transform:translate(-20vw,-10vh) scale(1.1);}
+  66%{transform:translate(-5vw,-15vh) scale(0.95);}
+}
+@keyframes blobMove3 {
+  0%,100%{transform:translate(-50%,-50%) scale(1);}
+  50%{transform:translate(-30%,-70%) scale(1.2);}
+}
+@keyframes blobMove4 {
+  0%,100%{transform:translate(0,0) scale(1);}
+  50%{transform:translate(-10vw,10vh) scale(1.3);}
+}
+
+.noise {
+  position:fixed; inset:0; z-index:1;
+  opacity:0.015;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events:none;
+}
+
+.slides-wrapper {
+  position:relative; z-index:2;
+  width:100%; height:100%;
+}
+
+.slide {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  padding:40px 60px 100px;
+  opacity:0;
+  transform:translateY(30px) scale(0.98);
+  transition:opacity 0.7s cubic-bezier(.4,0,.2,1), transform 0.7s cubic-bezier(.4,0,.2,1);
+  pointer-events:none;
+  visibility:hidden;
+}
+.slide.active {
+  opacity:1;
+  transform:translateY(0) scale(1);
+  pointer-events:auto;
+  visibility:visible;
+}
+
+.slide-inner {
+  width:100%;
+  max-width:1200px;
+  max-height:100%;
+  overflow-y:auto;
+  scrollbar-width:none;
+}
+.slide-inner::-webkit-scrollbar { display:none; }
+
+/* Glass card */
+.glass {
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  border-radius:20px;
+  backdrop-filter:blur(40px) saturate(180%);
+  -webkit-backdrop-filter:blur(40px) saturate(180%);
+  position:relative;
+  overflow:hidden;
+}
+.glass::before {
+  content:'';
+  position:absolute;
+  top:0; left:0; right:0;
+  height:1px;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+}
+.glass::after {
+  content:'';
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%);
+  pointer-events:none;
+}
+
+.glass-strong {
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.12);
+}
+
+/* Gradient text */
+.grad-text {
+  background:linear-gradient(135deg, var(--purple-light), var(--green-light));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.grad-text-purple {
+  background:linear-gradient(135deg, var(--purple-light), #c084fc);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+/* Sticker badges */
+.sticker {
+  display:inline-flex;
+  align-items:center; justify-content:center;
+  border-radius:16px;
+  font-size:28px;
+  position:relative;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+  transition:transform 0.3s ease;
+}
+.sticker:hover { transform:scale(1.1) rotate(2deg); }
+
+.sticker-sm {
+  width:48px; height:48px;
+  border-radius:14px;
+  font-size:22px;
+}
+.sticker-md {
+  width:64px; height:64px;
+  border-radius:18px;
+  font-size:30px;
+}
+.sticker-lg {
+  width:80px; height:80px;
+  border-radius:22px;
+  font-size:38px;
+}
+
+.sticker-purple {
+  background:linear-gradient(135deg, var(--purple), var(--purple-dark));
+  border:1px solid rgba(168,85,247,0.3);
+}
+.sticker-green {
+  background:linear-gradient(135deg, var(--green), var(--green-dark));
+  border:1px solid rgba(74,222,128,0.3);
+}
+.sticker-mixed {
+  background:linear-gradient(135deg, var(--purple), var(--green));
+  border:1px solid rgba(168,85,247,0.2);
+}
+.sticker-dark {
+  background:linear-gradient(135deg, #1a1a2e, #16213e);
+  border:1px solid rgba(255,255,255,0.1);
+}
+
+/* Track badge */
+.track-badge {
+  display:inline-flex;
+  align-items:center; gap:8px;
+  padding:8px 20px;
+  border-radius:100px;
+  background:linear-gradient(135deg, var(--purple), var(--green));
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:0.5px;
+  text-transform:uppercase;
+  box-shadow:0 4px 20px rgba(123,47,190,0.3);
+}
+
+/* Tag chips */
+.tag {
+  display:inline-flex;
+  align-items:center; gap:6px;
+  padding:6px 14px;
+  border-radius:100px;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.1);
+  font-size:12px;
+  font-weight:500;
+  color:var(--gray);
+  backdrop-filter:blur(10px);
+}
+.tag-purple { border-color:rgba(168,85,247,0.3); color:var(--purple-light); }
+.tag-green { border-color:rgba(74,222,128,0.3); color:var(--green-light); }
+
+/* Section titles */
+.section-label {
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--purple-light);
+  margin-bottom:8px;
+}
+
+h1 { font-size:clamp(40px,6vw,72px); font-weight:900; line-height:1.05; letter-spacing:-2px; }
+h2 { font-size:clamp(28px,3.5vw,42px); font-weight:800; line-height:1.15; letter-spacing:-1px; }
+h3 { font-size:clamp(18px,2vw,24px); font-weight:700; line-height:1.3; }
+p, li { font-size:15px; line-height:1.7; color:var(--gray); }
+strong { color:var(--white); font-weight:600; }
+
+ul { list-style:none; }
+ul li { padding-left:20px; position:relative; margin-bottom:6px; }
+ul li::before {
+  content:'';
+  position:absolute; left:0; top:10px;
+  width:6px; height:6px;
+  border-radius:50%;
+  background:linear-gradient(135deg, var(--purple-light), var(--green-light));
+}
+
+/* Grid helpers */
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.flex-col { display:flex; flex-direction:column; }
+.flex-row { display:flex; align-items:center; }
+.gap-8 { gap:8px; }
+.gap-12 { gap:12px; }
+.gap-16 { gap:16px; }
+.gap-20 { gap:20px; }
+.gap-24 { gap:24px; }
+
+/* Navigation */
+.nav-bar {
+  position:fixed;
+  bottom:24px; left:50%;
+  transform:translateX(-50%);
+  z-index:100;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 20px;
+  border-radius:100px;
+  background:rgba(13,13,18,0.8);
+  border:1px solid rgba(255,255,255,0.08);
+  backdrop-filter:blur(30px);
+}
+.nav-btn {
+  width:40px; height:40px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.04);
+  color:var(--white);
+  cursor:pointer;
+  display:flex;
+  align-items:center; justify-content:center;
+  transition:all 0.3s ease;
+  font-size:16px;
+}
+.nav-btn:hover {
+  background:rgba(168,85,247,0.2);
+  border-color:rgba(168,85,247,0.4);
+}
+.nav-dots {
+  display:flex; gap:6px; align-items:center;
+}
+.nav-dot {
+  width:8px; height:8px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.15);
+  cursor:pointer;
+  transition:all 0.3s ease;
+}
+.nav-dot.active {
+  width:24px;
+  border-radius:100px;
+  background:linear-gradient(90deg, var(--purple-light), var(--green-light));
+}
+.slide-counter {
+  font-size:13px;
+  font-weight:600;
+  color:var(--gray);
+  min-width:50px;
+  text-align:center;
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* Flow diagram */
+.flow-step {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 18px;
+  border-radius:14px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.06);
+  transition:all 0.3s ease;
+}
+.flow-step:hover {
+  background:rgba(168,85,247,0.08);
+  border-color:rgba(168,85,247,0.2);
+}
+.flow-num {
+  width:32px; height:32px;
+  border-radius:10px;
+  background:linear-gradient(135deg, var(--purple), var(--green));
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:800;
+  flex-shrink:0;
+}
+.flow-arrow {
+  display:flex; justify-content:center;
+  color:rgba(255,255,255,0.15);
+  font-size:18px;
+  padding:4px 0;
+}
+
+/* Team card */
+.team-card {
+  padding:20px;
+  border-radius:18px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.06);
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  transition:all 0.3s ease;
+}
+.team-card:hover {
+  background:rgba(255,255,255,0.06);
+  border-color:rgba(255,255,255,0.12);
+  transform:translateY(-4px);
+}
+.avatar {
+  width:48px; height:48px;
+  border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:16px;
+  flex-shrink:0;
+}
+.progress-bar {
+  width:100%;
+  height:6px;
+  border-radius:100px;
+  background:rgba(255,255,255,0.06);
+  overflow:hidden;
+}
+.progress-fill {
+  height:100%;
+  border-radius:100px;
+  background:linear-gradient(90deg, var(--purple-light), var(--green-light));
+  transition:width 1s cubic-bezier(.4,0,.2,1);
+}
+
+/* Feature card */
+.feature-card {
+  padding:20px;
+  border-radius:16px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.06);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  transition:all 0.3s ease;
+}
+.feature-card:hover {
+  background:rgba(168,85,247,0.06);
+  border-color:rgba(168,85,247,0.15);
+  transform:translateY(-2px);
+}
+
+/* Warning badge for org slide */
+.warning-strip {
+  padding:12px 20px;
+  border-radius:12px;
+  background:rgba(251,146,60,0.1);
+  border:1px solid rgba(251,146,60,0.25);
+  color:#fb923c;
+  font-size:13px;
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+/* Architecture module */
+.arch-module {
+  padding:16px;
+  border-radius:14px;
+  text-align:center;
+  font-size:13px;
+  font-weight:600;
+  color:var(--white);
+  transition:all 0.3s ease;
+}
+.arch-module:hover { transform:scale(1.05); }
+.arch-core {
+  background:linear-gradient(135deg, rgba(123,47,190,0.25), rgba(0,200,83,0.15));
+  border:1px solid rgba(168,85,247,0.3);
+  grid-column:span 2;
+  font-size:15px;
+}
+.arch-sub {
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+}
+
+/* Repo card */
+.repo-card {
+  padding:24px;
+  border-radius:18px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.08);
+}
+.repo-header {
+  display:flex; align-items:center; gap:12px;
+  padding-bottom:16px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  margin-bottom:16px;
+}
+.file-item {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 0;
+  font-size:14px;
+  color:var(--gray);
+}
+.file-icon { font-size:16px; }
+
+/* Claw SVG icon */
+.claw-icon {
+  display:inline-block;
+}
+
+/* Slide-specific animations */
+.fade-up {
+  opacity:0;
+  transform:translateY(20px);
+  transition:opacity 0.6s ease, transform 0.6s ease;
+}
+.slide.active .fade-up { opacity:1; transform:translateY(0); }
+.slide.active .fade-up:nth-child(1) { transition-delay:0.1s; }
+.slide.active .fade-up:nth-child(2) { transition-delay:0.2s; }
+.slide.active .fade-up:nth-child(3) { transition-delay:0.3s; }
+.slide.active .fade-up:nth-child(4) { transition-delay:0.4s; }
+.slide.active .fade-up:nth-child(5) { transition-delay:0.5s; }
+.slide.active .fade-up:nth-child(6) { transition-delay:0.6s; }
+
+/* Floating particles */
+.particles {
+  position:fixed; inset:0; z-index:1;
+  pointer-events:none; overflow:hidden;
+}
+.particle {
+  position:absolute;
+  width:3px; height:3px;
+  border-radius:50%;
+  background:rgba(168,85,247,0.4);
+  animation:particleFloat linear infinite;
+}
+
+@keyframes particleFloat {
+  0% { transform:translateY(100vh) translateX(0); opacity:0; }
+  10% { opacity:1; }
+  90% { opacity:1; }
+  100% { transform:translateY(-10vh) translateX(50px); opacity:0; }
+}
+
+/* Checklist */
+.check-item {
+  display:flex; align-items:flex-start; gap:10px;
+  padding:6px 0;
+  font-size:14px;
+  color:var(--gray);
+}
+.check-icon {
+  width:20px; height:20px;
+  border-radius:6px;
+  background:linear-gradient(135deg, var(--purple), var(--green));
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px;
+  flex-shrink:0;
+  margin-top:2px;
+}
+
+/* Final slide */
+.final-title {
+  font-size:clamp(60px,10vw,120px);
+  font-weight:900;
+  letter-spacing:-4px;
+  line-height:1;
+}
+
+/* Connector lines */
+.connector {
+  width:2px; height:20px;
+  background:linear-gradient(to bottom, rgba(168,85,247,0.3), rgba(74,222,128,0.3));
+  margin:0 auto;
+}
+
+.kbd {
+  display:inline-flex;
+  align-items:center;
+  padding:2px 8px;
+  border-radius:6px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.12);
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--gray);
+}
+
+/* Responsive */
+@media(max-width:900px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns:1fr; }
+  .slide { padding:24px 20px; }
+  .arch-core { grid-column:span 1; }
+  h1 { font-size:36px; letter-spacing:-1px; }
+  h2 { font-size:26px; }
+}
+@media(max-width:600px) {
+  .nav-bar { bottom:12px; padding:8px 14px; gap:8px; }
+  .slide { padding:16px 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Animated background blobs -->
+<div class="bg-layer">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="blob blob-4"></div>
+</div>
+<div class="noise"></div>
+
+<!-- Floating particles -->
+<div class="particles" id="particles"></div>
+
+<!-- ==================== SLIDES ==================== -->
+<div class="slides-wrapper">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active" data-slide="0">
+  <div class="slide-inner" style="text-align:center;">
+    <div class="fade-up" style="margin-bottom:12px;">
+      <img src="./assets/logo.jpg" style="height:200px;border-radius:24px;">
+    </div>
+    <h1 class="fade-up grad-text" style="margin-bottom:16px;">Ассистент по обучению</h1>
+    <h3 class="fade-up" style="color:var(--white);margin-bottom:20px;font-weight:500;max-width:700px;margin-left:auto;margin-right:auto;">
+      AI-наставник для подготовки и оценки специалистов <span class="grad-text">ТехВилл</span>
+    </h3>
+    <div class="fade-up glass" style="display:inline-block;padding:20px 32px;max-width:720px;">
+      <p style="font-size:14px;line-height:1.8;">
+        Интеллектуальный корпоративный бот, обученный на матрице компетенций компании, для подготовки сотрудников и кандидатов к аттестации, техническим интервью и практическим заданиям.
+      </p>
+    </div>
+    <div class="fade-up" style="display:flex;justify-content:center;gap:12px;margin-top:24px;flex-wrap:wrap;">
+      <span class="tag tag-purple">🧠 AI-оценка</span>
+      <span class="tag tag-green">📊 Матрица компетенций</span>
+      <span class="tag tag-purple">💻 Ревью кода</span>
+      <span class="tag tag-green">🎯 Персонализация</span>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: PROBLEM STATEMENT -->
+<div class="slide" data-slide="1">
+  <div class="slide-inner flex-col gap-20">
+    <div class="fade-up flex-row gap-16">
+      <div class="sticker sticker-lg sticker-mixed">🎯</div>
+      <div>
+        <div class="section-label">Слайд 2</div>
+        <h2>Постановка задачи</h2>
+      </div>
+    </div>
+    <div class="grid-2 fade-up">
+      <div class="glass" style="padding:24px;">
+        <h3 style="margin-bottom:12px;">🔍 Проблема</h3>
+        <p>В <strong>ТехВилл</strong> существует матрица компетенций с требованиями по грейдам и направлениям. Для повышения грейда необходимо пройти подготовку, аттестацию и интервью. Подготовка к аттестации проходит самостоятельно — без наставника. Техлиды тратят огромное время на консультации, проверку решений и обратную связь.</p>
+      </div>
+      <div class="glass" style="padding:24px;">
+        <h3 style="margin-bottom:12px;">🚀 Цель проекта</h3>
+        <p>Создать <strong>AI-бота</strong>, который на основе матрицы компетенций помогает готовиться к аттестации, проводит тренировочные интервью, анализирует код и формирует <strong>персональные профили развития</strong>.</p>
+      </div>
+    </div>
+    <div class="fade-up">
+      <h3 style="margin-bottom:12px;font-size:14px;color:var(--purple-light);">ЦЕЛЕВАЯ АУДИТОРИЯ</h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <span class="tag tag-purple">👨‍💻 Разработчики (все стеки)</span>
+        <span class="tag tag-green">🧪 QA-инженеры</span>
+        <span class="tag tag-purple">📊 Аналитики</span>
+        <span class="tag tag-purple">👑 Тимлиды и эксперты</span>
+      </div>
+    </div>
+    <div class="grid-2 fade-up">
+      <div class="glass" style="padding:20px;">
+        <h3 style="font-size:14px;margin-bottom:10px;">📈 Ожидаемый результат</h3>
+        <ul>
+          <li><p>Сокращение времени подготовки сотрудников</p></li>
+          <li><p>Повышение качества ответов и решений</p></li>
+          <li><p>Снижение нагрузки на техлидов и интервьюеров</p></li>
+          <li><p>Персонализированные рекомендации по развитию</p></li>
+        </ul>
+      </div>
+      <div class="glass" style="padding:20px;">
+        <h3 style="font-size:14px;margin-bottom:10px;">✅ Критерии успешности</h3>
+        <ul>
+          <li><p>Точность генерации вопросов по матрице</p></li>
+          <li><p>Корректность оценки ответов и решений</p></li>
+          <li><p>Полезность рекомендаций и профилей</p></li>
+          <li><p>Применимость для всех стеков</p></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: APPROACH -->
+<div class="slide" data-slide="2">
+  <div class="slide-inner flex-col gap-20">
+    <div class="fade-up flex-row gap-16">
+      <div class="sticker sticker-lg sticker-purple">⚙️</div>
+      <div>
+        <div class="section-label">Слайд 3</div>
+        <h2>Подход к решению</h2>
+      </div>
+    </div>
+    <div class="fade-up glass" style="padding:20px 24px;">
+      <p><strong>Специализированный корпоративный AI-бот</strong>, ограниченный матрицей компетенций и правилами оценки. Не универсальный чат-бот, а прикладной инструмент для задач ТехВилл.</p>
+    </div>
+    <div class="grid-2 fade-up">
+      <div class="flex-col gap-8">
+        <h3 style="font-size:14px;color:var(--purple-light);margin-bottom:4px;">ЛОГИКА РЕШЕНИЯ</h3>
+        <div class="flow-step"><div class="flow-num">1</div><span style="font-size:14px;color:var(--white);">Определение роли, уровня и сценария</span></div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step"><div class="flow-num">2</div><span style="font-size:14px;color:var(--white);">Подбор вопросов по матрице компетенций</span></div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step"><div class="flow-num">3</div><span style="font-size:14px;color:var(--white);">Анализ ответов, кода и решений</span></div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step"><div class="flow-num">4</div><span style="font-size:14px;color:var(--white);">Выявление пробелов → рекомендации</span></div>
+      </div>
+      <div class="flex-col gap-12">
+        <div>
+          <h3 style="font-size:14px;color:var(--green-light);margin-bottom:10px;">МЕТОДОЛОГИЯ</h3>
+          <div class="flex-col gap-8">
+            <div class="feature-card" style="padding:14px;">
+              <div class="flex-row gap-8"><span>🛠️</span><span style="font-size:13px;color:var(--white);">MVP-подход — рабочий прототип с ключевыми сценариями</span></div>
+            </div>
+            <div class="feature-card" style="padding:14px;">
+              <div class="flex-row gap-8"><span>🧬</span><span style="font-size:13px;color:var(--white);">Prompt engineering для точного поведения агента</span></div>
+            </div>
+            <div class="feature-card" style="padding:14px;">
+              <div class="flex-row gap-8"><span>🔐</span><span style="font-size:13px;color:var(--white);">Role-based logic для разных пользователей</span></div>
+            </div>
+            <div class="feature-card" style="padding:14px;">
+              <div class="flex-row gap-8"><span>🎨</span><span style="font-size:13px;color:var(--white);">UX на базе чат-бота, с доступом по "белым спискам"</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: ARCHITECTURE -->
+<div class="slide" data-slide="3">
+  <div class="slide-inner flex-col gap-20">
+    <div class="fade-up flex-row gap-16">
+      <div class="sticker sticker-lg sticker-mixed">🏗️</div>
+      <div>
+        <div class="section-label">Слайд 4</div>
+        <h2>Архитектура и технические решения</h2>
+      </div>
+    </div>
+    <div class="fade-up">
+      <h3 style="font-size:13px;color:var(--purple-light);margin-bottom:12px;">МОДУЛИ СИСТЕМЫ</h3>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+        <div class="arch-module arch-core">
+          <div style="font-size:22px;margin-bottom:4px;">🧠</div>
+          AI-ядро OpenClaw
+        </div>
+        <div class="arch-module arch-core">
+          <div style="font-size:22px;margin-bottom:4px;">📋</div>
+          Матрица компетенций
+        </div>
+        <div class="arch-module arch-sub">
+          <div style="font-size:18px;margin-bottom:4px;">🔐</div>
+          Авторизация (белые списки и роли)
+        </div>
+        <div class="arch-module arch-sub">
+          <div style="font-size:18px;margin-bottom:4px;">🎙️</div>
+          Интервью
+        </div>
+        <div class="arch-module arch-sub">
+          <div style="font-size:18px;margin-bottom:4px;">📊</div>
+          Анализ ответов
+        </div>
+        <div class="arch-module arch-sub">
+          <div style="font-size:18px;margin-bottom:4px;">🔍</div>
+          Ревью кода
+        </div>
+        <div class="arch-module arch-sub">
+          <div style="font-size:18px;margin-bottom:4px;">👤</div>
+          Профили
+        </div>
+        <div class="arch-module arch-sub">
+          <div style="font-size:18px;margin-bottom:4px;">💻</div>
+          UI
+        </div>
+      </div>
+    </div>
+    <div class="grid-2 fade-up">
+      <div>
+        <h3 style="font-size:13px;color:var(--green-light);margin-bottom:10px;">ТЕХНОЛОГИИ</h3>
+        <div class="flex-col gap-6">
+          <div class="feature-card" style="padding:12px;flex-direction:row;gap:10px;">
+            <span>🤖</span><span style="font-size:13px;color:var(--white);">LLM-ядро с промпт-инжинирингом</span>
+          </div>
+          <div class="feature-card" style="padding:12px;flex-direction:row;gap:10px;">
+            <span>📁</span><span style="font-size:13px;color:var(--white);">Генерация и ревью PHP, Go, и др.</span>
+          </div>
+          <div class="feature-card" style="padding:12px;flex-direction:row;gap:10px;">
+            <span>🔒</span><span style="font-size:13px;color:var(--white);">Авторизация пользователей</span>
+          </div>
+          <div class="feature-card" style="padding:12px;flex-direction:row;gap:10px;">
+            <span>🔌</span><span style="font-size:13px;color:var(--white);">Интеграция с корпоративными сервисами</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex-col gap-16">
+          <h3 style="font-size:13px;color:var(--green-light);margin-bottom:10px;">🚀 СЛЕДУЮЩИЕ ШАГИ</h3>
+          <ul>
+            <li><p style="font-size:12px;">Добавить systemd-юнит и health-check для Gateway</p></li>
+            <li><p style="font-size:12px;">npm-скрипт/Makefile для автоматической сборки архива</p></li>
+            <li><p style="font-size:12px;">Обновление OpenRouter key при переносе на другой сервер</p></li>
+            <li><p style="font-size:12px;">Генерация базы-архива с вопросами предварительно</p></li>
+            <li><p style="font-size:12px;">Оптимизация использования токенов AI</p></li>
+            <li><p style="font-size:12px;">Развёртывание локальной модели для оптимизации расходов</p></li>
+            <li><p style="font-size:12px;">Интеграция с актуализируемой базой работников для White-list</p></li>
+            <li><p style="font-size:12px;">Расширение количества ролей, грейдов и сценариев</p></li>
+            <li><p style="font-size:12px;">Метрики качества ответов, рекомендаций и прогресса</p></li>
+            <li><p style="font-size:12px;">Панель аналитики для тимлидов и экспертов</p></li>
+            <li><p style="font-size:12px;">Интеграция с внутренними HR/LMS-процессами компании</p></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: ARTIFACTS -->
+<div class="slide" data-slide="4">
+  <div class="slide-inner flex-col gap-20">
+    <div class="fade-up flex-row gap-16">
+      <div class="sticker sticker-lg sticker-green">📦</div>
+      <div>
+        <div class="section-label">Слайд 5</div>
+        <h2>Артефакты</h2>
+      </div>
+    </div>
+    <div class="fade-up">
+      <div class="repo-card">
+        <div class="repo-header">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--purple-light)" stroke-width="2" stroke-linecap="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+          <div>
+            <h3 style="font-size:16px;">Репозиторий проекта</h3>
+            <a href="https://gitlab-vv.vkusvill.ru/vv/development/products-and-services/techjam/techjam-project-52" target="_blank" style="font-size:12px;margin:0;color:var(--purple-light);text-decoration:none;">gitlab-vv.vkusvill.ru/…/techjam/techjam-project-52</a>
+          </div>
+        </div>
+        <div class="grid-3" style="gap:12px;">
+          <div class="flex-col gap-4">
+            <h3 style="font-size:12px;color:var(--purple-light);margin-bottom:2px;">.openclaw/</h3>
+            <div class="file-item"><span class="file-icon">⚙️</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">openclaw.json</span><span style="margin-left:auto;font-size:11px;">главный конфиг</span></div>
+            <div class="file-item"><span class="file-icon">🤖</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">agents/</span><span style="margin-left:auto;font-size:11px;">main + techvill</span></div>
+            <div class="file-item"><span class="file-icon">🔐</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">credentials/</span><span style="margin-left:auto;font-size:11px;">allow-list</span></div>
+            <div class="file-item"><span class="file-icon">⏰</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">cron/jobs.json</span><span style="margin-left:auto;font-size:11px;">cron-задачи</span></div>
+            <div class="file-item"><span class="file-icon">📬</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">delivery-queue/</span><span style="margin-left:auto;font-size:11px;">очередь</span></div>
+            <div class="file-item"><span class="file-icon">🧠</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">memory/</span><span style="margin-left:auto;font-size:11px;">SQLite-память</span></div>
+            <div class="file-item"><span class="file-icon">💻</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">canvas/index.html</span><span style="margin-left:auto;font-size:11px;">Canvas UI</span></div>
+            <div class="file-item"><span class="file-icon">📡</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">telegram/</span><span style="margin-left:auto;font-size:11px;">polling offset</span></div>
+          </div>
+          <div class="flex-col gap-4">
+            <h3 style="font-size:12px;color:var(--green-light);margin-bottom:2px;">workspace-techvill/</h3>
+            <div class="file-item"><span class="file-icon">📄</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">AGENTS.md</span><span style="margin-left:auto;font-size:11px;">поведение агента</span></div>
+            <div class="file-item"><span class="file-icon">🚀</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">BOOTSTRAP.md</span><span style="margin-left:auto;font-size:11px;">первый запуск</span></div>
+            <div class="file-item"><span class="file-icon">👤</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">IDENTITY.md</span><span style="margin-left:auto;font-size:11px;">имя, роль, вайб</span></div>
+            <div class="file-item"><span class="file-icon">💜</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">SOUL.md</span><span style="margin-left:auto;font-size:11px;">принципы</span></div>
+            <div class="file-item"><span class="file-icon">🔘</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">BUTTONS.md</span><span style="margin-left:auto;font-size:11px;">inline-кнопки</span></div>
+            <div class="file-item"><span class="file-icon">🎓</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">ONBOARDING.md</span><span style="margin-left:auto;font-size:11px;">онбординг</span></div>
+            <div class="file-item"><span class="file-icon">🛡️</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">SECURITY.md</span><span style="margin-left:auto;font-size:11px;">безопасность</span></div>
+            <div class="file-item"><span class="file-icon">📋</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">WHITELIST.md</span><span style="margin-left:auto;font-size:11px;">белый список</span></div>
+          </div>
+          <div class="flex-col gap-4">
+            <h3 style="font-size:12px;color:var(--gray);margin-bottom:2px;">workspace-techvill/ (cont.)</h3>
+            <div class="file-item"><span class="file-icon">🔍</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">PROFILE_LOOKUP.md</span><span style="margin-left:auto;font-size:11px;">поиск профилей</span></div>
+            <div class="file-item"><span class="file-icon">⚠️</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">LIMITS.md</span><span style="margin-left:auto;font-size:11px;">ограничения</span></div>
+            <div class="file-item"><span class="file-icon">🔒</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">ISOLATION.md</span><span style="margin-left:auto;font-size:11px;">изоляция</span></div>
+            <div class="file-item"><span class="file-icon">🛠️</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">TOOLS.md</span><span style="margin-left:auto;font-size:11px;">инструменты</span></div>
+            <div class="file-item"><span class="file-icon">💓</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">HEARTBEAT.md</span><span style="margin-left:auto;font-size:11px;">heartbeat</span></div>
+            <div class="file-item"><span class="file-icon">📊</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">матрицы/</span><span style="margin-left:auto;font-size:11px;">GO, QA и др.</span></div>
+            <div class="file-item"><span class="file-icon">👥</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">сотрудники/</span><span style="margin-left:auto;font-size:11px;">карточки + контексты</span></div>
+            <div class="file-item"><span class="file-icon">📝</span><span style="color:var(--white);font-family:'JetBrains Mono',monospace;font-size:12px;">memory/</span><span style="margin-left:auto;font-size:11px;">дневные заметки</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: TEAM -->
+<div class="slide" data-slide="5">
+  <div class="slide-inner flex-col gap-20">
+    <div class="fade-up flex-row gap-16">
+      <div class="sticker sticker-lg sticker-purple">👥</div>
+      <div>
+        <div class="section-label">Слайд 6</div>
+        <h2>Роли и вклад участников</h2>
+      </div>
+    </div>
+    <div class="fade-up" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;">
+      <!-- Member 1 -->
+      <div class="team-card">
+        <div class="flex-row gap-12">
+          <div class="avatar" style="background:linear-gradient(135deg,var(--purple),var(--green));">ВЛ</div>
+          <div>
+            <h3 style="font-size:13px;line-height:1.3;">Лукоянов В.А.</h3>
+            <p style="font-size:11px;margin:0;">Team Lead</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <span class="tag tag-purple" style="font-size:10px;padding:3px 8px;">AI Lead</span>
+          <span class="tag tag-green" style="font-size:10px;padding:3px 8px;">DevOps</span>
+        </div>
+        <p style="font-size:11px;line-height:1.5;">Архитектура, OpenClaw, инфраструктура, промпты</p>
+        <img src="./assets/vlad.jpg" alt="Лукоянов В.А." style="width:100%;border-radius:12px;margin-top:auto;object-fit:cover;aspect-ratio:1;"/>
+      </div>
+      <!-- Member 2 -->
+      <div class="team-card">
+        <div class="flex-row gap-12">
+          <div class="avatar" style="background:linear-gradient(135deg,#6366f1,var(--purple));">ВФ</div>
+          <div>
+            <h3 style="font-size:13px;line-height:1.3;">Филиченок В.А.</h3>
+            <p style="font-size:11px;margin:0;">QA / AI Trainer</p>
+            
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <span class="tag tag-purple" style="font-size:10px;padding:3px 8px;">AI Trainer</span>
+          <span class="tag tag-green" style="font-size:10px;padding:3px 8px;">QA</span>
+        </div>
+        <p style="font-size:11px;line-height:1.5;">Логика оценки, сценарии интервью, качество ответов</p>
+        <img src="./assets/vladimir.jpg" alt="Филиченок В.А." style="width:100%;border-radius:12px;margin-top:auto;object-fit:cover;aspect-ratio:1;"/>
+      </div>
+      <!-- Member 3 -->
+      <div class="team-card">
+        <div class="flex-row gap-12">
+          <div class="avatar" style="background:linear-gradient(135deg,var(--green),#059669);">АО</div>
+          <div>
+            <h3 style="font-size:13px;line-height:1.3;">Оболкин А.В.</h3>
+            <p style="font-size:11px;margin:0;">Аналитик</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <span class="tag tag-purple" style="font-size:10px;padding:3px 8px;">Аналитик</span>
+        </div>
+        <p style="font-size:11px;line-height:1.5;">Анализ требований, тестирование, валидация сценариев</p>
+        <img src="./assets/arkadiy.jpg" alt="Оболкин А.В." style="width:100%;border-radius:12px;margin-top:auto;object-fit:cover;aspect-ratio:1;"/>
+      </div>
+      <!-- Member 4 -->
+      <div class="team-card">
+        <div class="flex-row gap-12">
+          <div class="avatar" style="background:linear-gradient(135deg,#f59e0b,#dc2626);">МД</div>
+          <div>
+            <h3 style="font-size:13px;line-height:1.3;">Димаев М.Р.</h3>
+            <p style="font-size:11px;margin:0;">GO / AI Trainer</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <span class="tag tag-purple" style="font-size:10px;padding:3px 8px;">AI Trainer</span>
+        </div>
+        <p style="font-size:11px;line-height:1.5;">Анализ требований, тестирование, валидация сценариев GO</p>
+        <img src="./assets/marat.jpg" alt="Димаев М.Р." style="width:100%;border-radius:12px;margin-top:auto;object-fit:cover;aspect-ratio:1;"/>
+      </div>
+      <!-- Member 5 -->
+      <div class="team-card">
+        <div class="flex-row gap-12">
+          <div class="avatar" style="background:linear-gradient(135deg,#06b6d4,#3b82f6);">СБ</div>
+          <div>
+            <h3 style="font-size:13px;line-height:1.3;">Бирюков С.С.</h3>
+            <p style="font-size:11px;margin:0;">QA / AI Trainer</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <span class="tag tag-green" style="font-size:10px;padding:3px 8px;">QA</span>
+          <span class="tag tag-purple" style="font-size:10px;padding:3px 8px;">AI Trainer</span>
+        </div>
+        <p style="font-size:11px;line-height:1.5;">Тест-кейсы, контроль качества оценки и рекомендаций</p>
+        <img src="./assets/stas.jpg" alt="Бирюков С.С." style="width:100%;border-radius:12px;margin-top:auto;object-fit:cover;aspect-ratio:1;"/>
+      </div>
+    </div>
+    <div class="fade-up glass" style="padding:16px 20px;text-align:center;">
+      <p style="font-size:14px;">Команда закрыла <strong>полный цикл разработки</strong> — от анализа задачи и AI-логики до тестирования, безопасности, сценариев оценки и подготовки демонстрации.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: THANK YOU -->
+<div class="slide" data-slide="6">
+  <div class="slide-inner" style="text-align:center;">
+    <div class="fade-up" style="margin-bottom:20px;">
+      <img src="./assets/logo.jpg" style="height:200px;border-radius:24px;">
+    </div>
+    <h1 class="fade-up final-title grad-text" style="margin-bottom:16px;">Спасибо!</h1>
+    <div class="fade-up" style="margin-bottom:20px;">
+      <!--img src="./assets/team.jpg" style="max-width:700px;width:100%;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.4);"/-->
+    </div>
+    <div class="fade-up" style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">
+      <div class="sticker sticker-md sticker-purple" style="animation:pulse 2s ease-in-out infinite;">🧠</div>
+      <div class="sticker sticker-md sticker-green" style="animation:pulse 2s ease-in-out 0.3s infinite;">🚀</div>
+      <div class="sticker sticker-md sticker-mixed" style="animation:pulse 2s ease-in-out 0.6s infinite;">💜</div>
+    </div>
+    <div class="fade-up" style="margin-top:24px;">
+      <p style="font-size:13px;color:rgba(255,255,255,0.3);">
+        Используйте <span class="kbd">←</span> <span class="kbd">→</span> для навигации &middot; <span class="kbd">F</span> полный экран
+      </p>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- NAVIGATION -->
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn" aria-label="Previous slide">‹</button>
+  <div class="nav-dots" id="navDots"></div>
+  <div class="slide-counter" id="slideCounter">1 / 7</div>
+  <button class="nav-btn" id="nextBtn" aria-label="Next slide">›</button>
+</div>
+
+<style>
+@keyframes pulse {
+  0%,100% { transform:scale(1); }
+  50% { transform:scale(1.1); }
+}
+</style>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let currentSlide = 0;
+
+  const dotsContainer = document.getElementById('navDots');
+  const counter = document.getElementById('slideCounter');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  for (let i = 0; i < totalSlides; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', () => goToSlide(i));
+    dotsContainer.appendChild(dot);
+  }
+
+  function goToSlide(n) {
+    if (n < 0 || n >= totalSlides || n === currentSlide) return;
+    slides[currentSlide].classList.remove('active');
+    dotsContainer.children[currentSlide].classList.remove('active');
+    currentSlide = n;
+    slides[currentSlide].classList.add('active');
+    dotsContainer.children[currentSlide].classList.add('active');
+    counter.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    animateProgressBars();
+  }
+
+  function animateProgressBars() {}
+
+  prevBtn.addEventListener('click', () => goToSlide(currentSlide - 1));
+  nextBtn.addEventListener('click', () => goToSlide(currentSlide + 1));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      goToSlide(currentSlide + 1);
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
+      e.preventDefault();
+      goToSlide(currentSlide - 1);
+    }
+    if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen();
+      }
+    }
+    if (e.key === 'Home') goToSlide(0);
+    if (e.key === 'End') goToSlide(totalSlides - 1);
+  });
+
+  let touchStartX = 0;
+  document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, {passive: true});
+  document.addEventListener('touchend', (e) => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 60) {
+      diff > 0 ? goToSlide(currentSlide + 1) : goToSlide(currentSlide - 1);
+    }
+  }, {passive: true});
+
+  const particlesContainer = document.getElementById('particles');
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (15 + Math.random() * 20) + 's';
+    p.style.animationDelay = Math.random() * 15 + 's';
+    p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+    if (Math.random() > 0.5) p.style.background = 'rgba(74,222,128,0.3)';
+    particlesContainer.appendChild(p);
+  }
+})();
+</script>
+
+</body>
+</html>
