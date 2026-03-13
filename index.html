@@ -730,46 +730,26 @@ ul li::before {
         <h2>Архитектура и технические решения</h2>
       </div>
     </div>
-    <div class="fade-up">
-      <h3 style="font-size:13px;color:var(--purple-light);margin-bottom:12px;">МОДУЛИ СИСТЕМЫ</h3>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
-        <div class="arch-module arch-core">
-          <div style="font-size:22px;margin-bottom:4px;">🧠</div>
-          AI-ядро OpenClaw
-        </div>
-        <div class="arch-module arch-core">
-          <div style="font-size:22px;margin-bottom:4px;">📋</div>
-          Матрица компетенций
-        </div>
-        <div class="arch-module arch-sub">
-          <div style="font-size:18px;margin-bottom:4px;">🔐</div>
-          Авторизация (белые списки и роли)
-        </div>
-        <div class="arch-module arch-sub">
-          <div style="font-size:18px;margin-bottom:4px;">🎙️</div>
-          Интервью
-        </div>
-        <div class="arch-module arch-sub">
-          <div style="font-size:18px;margin-bottom:4px;">📊</div>
-          Анализ ответов
-        </div>
-        <div class="arch-module arch-sub">
-          <div style="font-size:18px;margin-bottom:4px;">🔍</div>
-          Ревью кода
-        </div>
-        <div class="arch-module arch-sub">
-          <div style="font-size:18px;margin-bottom:4px;">👤</div>
-          Профили
-        </div>
-        <div class="arch-module arch-sub">
-          <div style="font-size:18px;margin-bottom:4px;">💻</div>
-          UI
-        </div>
-      </div>
-    </div>
     <div class="grid-2 fade-up">
       <div>
-        <h3 style="font-size:13px;color:var(--green-light);margin-bottom:10px;">ТЕХНОЛОГИИ</h3>
+        <h3 style="font-size:13px;color:var(--purple-light);margin-bottom:12px;">МОДУЛИ СИСТЕМЫ</h3>
+        <div class="flex-col gap-10">
+          <div class="arch-module arch-core" style="grid-column:unset;">
+            <div style="font-size:22px;margin-bottom:4px;">🤖</div>
+            AI языковая модель
+          </div>
+          <div class="arch-module arch-core" style="grid-column:unset;">
+            <div style="font-size:22px;margin-bottom:4px;">🧠</div>
+            AI-ядро OpenClaw
+          </div>
+          <div class="arch-module arch-core" style="grid-column:unset;">
+            <div style="font-size:22px;margin-bottom:4px;">📡</div>
+            Telegram
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3 style="font-size:13px;color:var(--green-light);margin-bottom:12px;">ТЕХНОЛОГИИ</h3>
         <div class="flex-col gap-6">
           <div class="feature-card" style="padding:12px;flex-direction:row;gap:10px;">
             <span>🤖</span><span style="font-size:13px;color:var(--white);">LLM-ядро с промпт-инжинирингом</span>
@@ -785,23 +765,29 @@ ul li::before {
           </div>
         </div>
       </div>
-      <div class="flex-col gap-16">
-          <h3 style="font-size:13px;color:var(--green-light);margin-bottom:10px;">🚀 СЛЕДУЮЩИЕ ШАГИ</h3>
-          <ul>
-            <li><p style="font-size:12px;">Добавить systemd-юнит и health-check для Gateway</p></li>
-            <li><p style="font-size:12px;">npm-скрипт/Makefile для автоматической сборки архива</p></li>
-            <li><p style="font-size:12px;">Обновление OpenRouter key при переносе на другой сервер</p></li>
-            <li><p style="font-size:12px;">Генерация базы-архива с вопросами предварительно</p></li>
-            <li><p style="font-size:12px;">Оптимизация использования токенов AI</p></li>
-            <li><p style="font-size:12px;">Развёртывание локальной модели для оптимизации расходов</p></li>
-            <li><p style="font-size:12px;">Интеграция с актуализируемой базой работников для White-list</p></li>
-            <li><p style="font-size:12px;">Расширение количества ролей, грейдов и сценариев</p></li>
-            <li><p style="font-size:12px;">Метрики качества ответов, рекомендаций и прогресса</p></li>
-            <li><p style="font-size:12px;">Панель аналитики для тимлидов и экспертов</p></li>
-            <li><p style="font-size:12px;">Интеграция с внутренними HR/LMS-процессами компании</p></li>
-          </ul>
-        </div>
+    </div>
+    <div class="fade-up">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+        <img src="./assets/screen01.png" style="width:100%;border-radius:12px;border:1px solid rgba(255,255,255,0.08);"/>
+        <img src="./assets/screen02.png" style="width:100%;border-radius:12px;border:1px solid rgba(255,255,255,0.08);"/>
+        <img src="./assets/screen03.png" style="width:100%;border-radius:12px;border:1px solid rgba(255,255,255,0.08);"/>
       </div>
+    </div>
+    <div class="fade-up">
+      <h3 style="font-size:13px;color:var(--green-light);margin-bottom:10px;">🚀 СЛЕДУЮЩИЕ ШАГИ</h3>
+      <ul style="columns:2;column-gap:32px;">
+        <li><p style="font-size:12px;">Добавить systemd-юнит и health-check для Gateway</p></li>
+        <li><p style="font-size:12px;">npm-скрипт/Makefile для автоматической сборки архива</p></li>
+        <li><p style="font-size:12px;">Обновление OpenRouter key при переносе на другой сервер</p></li>
+        <li><p style="font-size:12px;">Генерация базы-архива с вопросами предварительно</p></li>
+        <li><p style="font-size:12px;">Оптимизация использования токенов AI</p></li>
+        <li><p style="font-size:12px;">Развёртывание локальной модели для оптимизации расходов</p></li>
+        <li><p style="font-size:12px;">Интеграция с актуализируемой базой работников для White-list</p></li>
+        <li><p style="font-size:12px;">Расширение количества ролей, грейдов и сценариев</p></li>
+        <li><p style="font-size:12px;">Метрики качества ответов, рекомендаций и прогресса</p></li>
+        <li><p style="font-size:12px;">Панель аналитики для тимлидов и экспертов</p></li>
+        <li><p style="font-size:12px;">Интеграция с внутренними HR/LMS-процессами компании</p></li>
+      </ul>
     </div>
   </div>
 </div>
